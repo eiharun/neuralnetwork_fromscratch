@@ -380,6 +380,12 @@ void NN::load_data(std::string filename){
     char num_layers_b[2];
     model_file.read(num_layers_b, 2);
     int num_layers{ ( num_layers_b[1] << 8 | num_layers_b[0]) };
+    vector<int> nodes_per_layer(num_layers); 
+    for(int i{}; i<num_layers; ++i){
+        uint32_t num_nodes{};
+        model_file.read(reinterpret_cast<char*>(&num_nodes), sizeof(uint32_t));
+        nodes_per_layer[i] = num_nodes;
+    }
     // Read weights
     vector<Tensor<float>> weights(num_layers-1, Tensor<float>(0.0f));
     for(int i{}; i<num_layers-1; ++i){
@@ -391,9 +397,12 @@ void NN::load_data(std::string filename){
         //Data
         vector<float> data(row*col);
         for(int j{}; j<row*col; ++j){
+            if(j == (row*col)-1){
+                volatile int s{};
+            }
             uint32_t val{};
             model_file.read(reinterpret_cast<char*>(&val), sizeof(uint32_t));
-            data[j] = val;
+            data[j] = static_cast<float>(val);
         }
         weights[i] = Tensor<float>(data, vector<size_t>{row,col});
     }
